@@ -1,0 +1,39 @@
+- name: Playbook for Installation of kubectl
+  hosts: localhost
+  user: ubuntu
+  become: yes
+
+  tasks:
+  - name: 1. Updat ethe APT Package Manager
+    apt:
+      update_cache: yes
+
+  - name: 2. Install the dependency packages
+    apt:
+      name: "{{ item }}"
+      state: present
+    with_items:
+      - apt-transport-https
+      - ca-certificates
+      - curl
+      - gpg
+
+  - name: 3. Create keyrings list directory
+    shell:
+      cmd: mkdir -p -m 755 /etc/apt/keyrings
+
+  - name: 4. Download Kubernetes key
+    shell:
+      cmd: curl -fsSL https://pkgs.k8s.io/core:/stable:/v1.31/deb/Release.key | gpg --dearmor --yes -o /etc/apt/keyrings/kubernetes-apt-key.gpg
+
+  - name: 5. Add Kubernetes repo
+    shell:
+      cmd: echo 'deb [signed-by=/etc/apt/keyrings/kubernetes-apt-key.gpg] https://pkgs.k8s.io/core:/stable:/v1.31/deb/ /' | tee /etc/apt/sources.list.d/kubernetes.list
+
+  - name: 6. Update Package Manager
+    apt:
+      update_cache: yes
+
+  - name: 7. Install kubectl with snap
+    shell:
+      cmd: snap install kubectl --classic

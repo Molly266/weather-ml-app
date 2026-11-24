@@ -1,0 +1,21 @@
+---
+- name: Deploy App to Kubernetes
+  hosts: localhost
+  connection: local
+  gather_facts: false
+
+  tasks:
+    - name: Ensure Kubernetes dependencies are installed
+      ansible.builtin.pip:
+        name:
+          - kubernetes
+          - pyyaml
+        state: present
+
+    - name: Deploy app and service to Kubernetes
+      kubernetes.core.k8s:
+        state: present
+        src: "{{ item }}"
+      loop:
+        - "./manifests/deployment.yaml"
+        - "./manifests/service.yaml"

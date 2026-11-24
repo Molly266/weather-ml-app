@@ -1,0 +1,23 @@
+---
+- name: Playbook to install and start minikube
+  hosts: localhost
+  user: ubuntu
+  become: yes
+
+  tasks:
+  - name: 1. Download minikube binary
+    shell:
+      cmd: curl -Lo minikube https://storage.googleapis.com/minikube/releases/latest/minikube-linux-amd64
+
+  - name: 2. Make it so minikube binary can be executed
+    shell:
+      cmd: chmod +x minikube
+
+  - name: 3. Move minikube binary to /usr/local/bin/
+    shell:
+      cmd: mv minikube /usr/local/bin/
+
+  - name: 4. Start Minikube
+    become: no
+    shell:
+      cmd: minikube start
