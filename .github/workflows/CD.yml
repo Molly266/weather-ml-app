@@ -1,0 +1,28 @@
+name: CD Pipeline
+
+on:
+  workflow_run:
+    workflows: ["CI Workflow"]
+    types:
+      - completed
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@v4
+
+      - name: Set up Kubernetes Config
+        uses: azure/k8s-set-context@v3
+        with:
+          method: kubeconfig
+          kubeconfig: ${{ secrets.KUBE_CONFIG }}
+
+      - name: Deploy to Kubernetes with a Rollout
+        run: |
+          kubectl apply -f ansible/manifests/deployment.yaml
+          kubectl apply -f ansible/manifests/service.yaml
+          kubectl rollout restart deployment/flask-app-deployment
+          kubectl rollout status deployment/flask-app-deployment
