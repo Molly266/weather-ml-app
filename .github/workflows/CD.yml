@@ -14,15 +14,23 @@ jobs:
       - name: Checkout Repo
         uses: actions/checkout@v4
 
-      - name: Set up Kubernetes Config
-        uses: azure/k8s-set-context@v3
+      - name: Set up SSH Agent
+        uses: webfactory/ssh-agent@v9
         with:
-          method: kubeconfig
-          kubeconfig: ${{ secrets.KUBE_CONFIG }}
+          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
 
-      - name: Deploy to Kubernetes with a Rollout
+      - name: Copy Manifests and Deploy via SSH
         run: |
-          kubectl apply -f ansible/manifests/deployment.yaml
-          kubectl apply -f ansible/manifests/service.yaml
-          kubectl rollout restart deployment/flask-app-deployment
-          kubectl rollout status deployment/flask-app-deployment
+          mkdir -p ~/.ssh
+          echo "StrictHostKeyChecking no" >> ~/.ssh/config
+
+          # Copy your local manifests folder to the EC2 instance
+          scp -r ansible/manifests ubuntu@${{ secrets.PROD_HOST }}:/home/ubuntu/
+
+          # SSH into prod server and execute the deployment and rollout
+          ssh ubuntu@${{ secrets.PROD_HOST }} << 'EOF'
+            kubectl apply -f /home/ubuntu/manifests/deployment.yaml
+            kubectl apply -f /home/ubuntu/manifests/service.yaml
+            kubectl rollout restart deployment/flask-app-deployment
+            kubectl rollout status deployment/flask-app-deployment
+          EOF
