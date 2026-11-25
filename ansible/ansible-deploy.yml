@@ -3,19 +3,34 @@
   hosts: localhost
   connection: local
   gather_facts: false
+  become: true
 
   tasks:
-    - name: Ensure Kubernetes dependencies are installed
-      ansible.builtin.pip:
+    - name: Ensure Python Kubernetes and YAML packages are installed via apt
+      ansible.builtin.apt:
         name:
-          - kubernetes
-          - pyyaml
+          - python3-kubernetes
+          - python3-yaml
         state: present
+        update_cache: yes
 
     - name: Deploy app and service to Kubernetes
       kubernetes.core.k8s:
         state: present
         src: "{{ item }}"
+        kubeconfig: "/home/ubuntu/.kube/config"
+        namespace: "default"
       loop:
         - "./manifests/deployment.yaml"
         - "./manifests/service.yaml"
+
+    - name: Kill existing background port-forward processes
+      ansible.builtin.shell: pkill -f "kubectl port-forward"
+      failed_when: false
+      changed_when: false
+
+    - name: Start background port-forwarding for port 30000 so it is accessible publically
+      ansible.builtin.shell: |
+        nohup kubectl port-forward --address 0.0.0.0 svc/flask-app-service 30000:5000 --kubeconfig=/home/ubuntu/.kube/config > /dev/null 2>&1 &
+      async: 10
+      poll: 0

@@ -20,5 +20,6 @@ spec:
       containers:
       - name: flask-app
         image: molly266/weather-ml:latest
+        imagePullPolicy: Always
         ports:
         - containerPort: 5000
