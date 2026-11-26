@@ -22,10 +22,11 @@ jobs:
 
       - name: Copy Manifests and Deploy via SSH
         run: |
+          # Create ssh directory if does not exist
           mkdir -p ~/.ssh
           echo "StrictHostKeyChecking no" >> ~/.ssh/config
 
-          # Copy your local manifests folder to the EC2 instance
+          # Copy manifests folder to the prod server
           scp -r ansible/manifests ubuntu@${{ secrets.PROD_HOST }}:/home/ubuntu/
 
           # SSH into prod server and execute the deployment and rollout
