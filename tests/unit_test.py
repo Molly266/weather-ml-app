@@ -50,7 +50,7 @@ class TestUnit(unittest.TestCase):
         ).reshape(1, -1)
 
         class_result, _ = classify_weather(test_input)
-        self.assertEqual(class_result, 'rainy')
+        self.assertEqual(class_result, 'rain')
 
     # Test that prediction index 3 maps to foggy
     @patch('app.load_model')
